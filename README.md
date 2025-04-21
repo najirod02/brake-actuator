@@ -2,6 +2,14 @@
 
 This project aims to test both an incremental magnetic encoder and a stepper motor using the STM32 Nucleo F446RE board.
 
+In more detail, the components used are:
+
+- [NME2-UVW-U15-05-O –  High-resolution magnetic encoder](https://www.nanotec.com/us/en/products/8482-nme2-uvw-u15-05-o)
+
+- [LGA561S20-B-TSCA-019 –  Captive linear actuator – NEMA 23](https://www.nanotec.com/us/en/products/8546-lga561s20-b-tsca-019)
+
+- [STM32 Nucleo F446RE](https://www.st.com/en/evaluation-tools/nucleo-f446re.html)
+
 ## Encoder
 For the encoder, only the A and B pins are needed, in addition to ground and VCC.
 
@@ -21,4 +29,4 @@ To control the stepper motor, a driver requiring only 3 pins is used:
 
 To move the motor, another timer is used, allowing for control of the stepper motor’s movements velocity.
 
-At the moment each step should take 1ms meaning that to move of 1cm it is required 1 second. This movement is slow but can be modified whenever we are sure that the actual implementation works.
+At the moment on each second, 8 pulses are generated. With this configuration we expect the motor to move at a sustained speed that allows to visually see if it works.
