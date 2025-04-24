@@ -1,6 +1,6 @@
 # Brake actuator
 
-This project aims to test both an incremental magnetic encoder and a stepper motor using the STM32 Nucleo F446RE board.
+This project aims to test both an incremental magnetic encoder and a linear actuator using the STM32 Nucleo F446RE board.
 
 In more detail, the components used are:
 
@@ -21,12 +21,10 @@ For the encoder, only the A and B pins are needed, in addition to ground and VCC
 
 In this implementation, a signed counter is used to allow for both positive and negative values, unlike the standard unsigned counter typically used with HAL.
 
-## Step motor
-To control the stepper motor, a driver requiring only 3 pins is used:
+## Linear actuator
+To control the linear actuator, a driver requiring only 3 pins is used:
 - Enable as pin PC0
 - Step as pin PC1
 - Dir as pin PC2
 
-To move the motor, another timer is used, allowing for control of the stepper motor’s movements velocity.
-
-At the moment on each second, 8 pulses are generated. With this configuration we expect the motor to move at a sustained speed that allows to visually see if it works.
+The actuator is moved more or less of 2cm from its homing position. At the moment the code simply implement such logic in the main while. Further implementations will use timers / pwm with interrupt handling in order to allow "multiprocessing".
