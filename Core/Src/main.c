@@ -101,7 +101,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  //setting up driver pins to "activate" the driver
+  //setting up pins to "activate" the driver
   HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
@@ -114,17 +114,13 @@ int main(void)
 
     /*
     for testing, move the actuator for a constant number of steps in both direction
-    so that from an homing position we move of a certain distance to then go back to the homing position.
-
-    when rotating counterclockwise, the actuator should extend the screw
-    when rotating clockwise, the actuator should retract the screw
+    so that from an homing position we move of a certain distance to then go back to the original position.
     */
 
-    //in ccw should work
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
     for(uint16_t i = 0; i<STEPS; i++){
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_SET);
-      HAL_Delay(1);
+      HAL_Delay(1);//with no delay, the step is not "recognnized"
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_RESET);
       HAL_Delay(1);
     }
