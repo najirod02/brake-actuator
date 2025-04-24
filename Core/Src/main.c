@@ -35,10 +35,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CLOCKWISE GPIO_PIN_SET
-#define COUNTERCLOCKWISE GPIO_PIN_RESET
 
-#define STEPS 1000 //each step moves the shaft of 0.01mm meaning that 1000 steps = 1 cm
+#define EXTEND GPIO_PIN_SET // the actutor "extends" (cw rotation w.r.t. back of actuator)
+#define RETRACT GPIO_PIN_RESET // the actuator "retracts" (ccw rotation w.r.t. back of actuator)
+#define STEPS 500 //each step moves the shaft of 0.01mm meaning that 1000 steps = 1 cm
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,11 +50,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-// uint32_t rawCounter = 0; // value read from the board
-// uint32_t lastRawCounter = 0; // last value read form the board
-// int32_t counter = 0; // a signed value for the encoder
-// uint32_t motorSteps = 0; // number of steps done by the motor
-// bool isStepHigh = false; // to toggle step pin
 
 /* USER CODE END PV */
 
@@ -65,37 +61,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-// void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-//   if(htim->Instance == TIM2){
-//     //callback for encoder
-//     //with this logic we can have also negative values
-//     rawCounter = __HAL_TIM_GET_COUNTER(htim);
-
-//     if(rawCounter > lastRawCounter){
-//       //clockwise rotation
-//       counter += (rawCounter - lastRawCounter);
-//     } else if (rawCounter < lastRawCounter){
-//       //couterclockwise rotation
-//       counter -= (lastRawCounter - rawCounter);
-//     }
-
-//     lastRawCounter = rawCounter;
-//   }
-//   else if(htim->Instance == TIM3){
-//     //callback for step motor
-//     //make a single step
-//     HAL_GPIO_WritePin(GPIOC, ActuatorStep_Pin, isStepHigh ? GPIO_PIN_RESET : GPIO_PIN_SET);
-//     isStepHigh = !isStepHigh;
-//     // not a good solution but for testing is enough
-//     //try using another timer of PWM for generating pulses
-//     if (!isStepHigh) motorSteps++;  // count only when setting HIGH
-//   }
-//   else if(htim->Instance == TIM4){
-//     //callback for pwm step motor
-//     //the step has already been done we just increment the number of steps done
-//     motorSteps++;
-//   }
-// }
 
 /* USER CODE END 0 */
 
@@ -136,9 +101,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  //setting up driver pins
-  //enable, sleep and reset must be set to high in order to "activate" the driver
-  HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, GPIO_PIN_SET);
+  //setting up driver pins to "activate" the driver
+  HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
 
@@ -155,25 +119,27 @@ int main(void)
     when rotating counterclockwise, the actuator should extend the screw
     when rotating clockwise, the actuator should retract the screw
     */
-    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, COUNTERCLOCKWISE);
+
+    //in ccw should work
+    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
     for(uint16_t i = 0; i<STEPS; i++){
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_SET);
-      HAL_Delay(100);
+      HAL_Delay(1);
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_RESET);
-      HAL_Delay(100);
+      HAL_Delay(1);
     }
 
-    HAL_Delay(2000);//wait some time before rotating in opposite direction
+    HAL_Delay(200);//wait some time before rotating in opposite direction
 
-    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, CLOCKWISE);
+    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, RETRACT);
     for(uint16_t i = 0; i<STEPS; i++){
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_SET);
-      HAL_Delay(100);
+      HAL_Delay(1);
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_RESET);
-      HAL_Delay(100);
+      HAL_Delay(1);
     }
 
-    HAL_Delay(2000);//wait some time before rotating in opposite direction
+    HAL_Delay(200);//wait some time before rotating in opposite direction
 
   }
   /* USER CODE END 3 */
