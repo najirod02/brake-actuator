@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -94,12 +95,16 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t msg[50] = {'\0'};
+  
+  //starting timer for encoder reading
+  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
 
   //setting up pins to "activate" the driver
   HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, GPIO_PIN_RESET);
@@ -123,6 +128,10 @@ int main(void)
       HAL_Delay(1);//with no delay, the step is not "recognnized"
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_RESET);
       HAL_Delay(1);
+
+      // encoder counter reading
+      sprintf(msg, "Encoder Ticks = %ld\n\r", (TIM2->CNT)>>2);
+      HAL_UART_Transmit(&huart2, msg, sizeof(msg), 100);
     }
 
     HAL_Delay(200);//wait some time before rotating in opposite direction
@@ -133,9 +142,17 @@ int main(void)
       HAL_Delay(1);
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_RESET);
       HAL_Delay(1);
+
+      // encoder counter reading
+      sprintf(msg, "Encoder Ticks = %ld\n\r", (TIM2->CNT)>>2);
+      HAL_UART_Transmit(&huart2, msg, sizeof(msg), 100);
     }
 
     HAL_Delay(200);//wait some time before rotating in opposite direction
+
+    // // encoder counter reading
+    // sprintf(msg, "Encoder Ticks = %ld\n\r", (TIM2->CNT)>>2);
+    // HAL_UART_Transmit(&huart2, msg, sizeof(msg), 100);
 
   }
   /* USER CODE END 3 */
