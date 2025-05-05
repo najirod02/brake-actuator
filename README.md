@@ -6,6 +6,8 @@ This project aims to test both a linear actuator and an incremental magnetic enc
 
 - [LGA561S20-B-TSCA-019 –  Captive linear actuator – NEMA 23](https://www.nanotec.com/us/en/products/8546-lga561s20-b-tsca-019)
 
+    - [Product specification - article number](https://www.nanotec.com/eu/en/knowledge-base-article/captive-linear-actuators)
+
 - [NME2-UVW-U15-05-O –  High-resolution magnetic encoder](https://www.nanotec.com/us/en/products/8482-nme2-uvw-u15-05-o)
 
 - [A4988 stepper motor driver](https://www.pololu.com/file/0j450/a4988_dmos_microstepping_driver_with_translator.pdf)
@@ -40,14 +42,10 @@ Note: The DIR pin appears to require more current than the STM32 can supply dire
 ## Encoder
 Currently, only channels A and B of the encoder are used on the board:
 
-- Channel A is encoder pin 3.
+- Channel A is encoder pin 3 set to PA0.
 
-- Channel B is encoder pin 5.
+- Channel B is encoder pin 5 set to PA1.
 
 Power and ground must also be connected.\
-There is no implementation yet to read or interpret the encoder data.
 
-## Next steps
-- Implement encoder reading to track the actuator’s real-time position.
-
-- Replace the current toggle-based stepping with a PWM-based signal on the STEP pin for more precise and consistent speed control.
+In the current implementation we simply read the encoder counter to know how much the actuator moved
