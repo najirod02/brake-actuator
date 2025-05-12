@@ -38,7 +38,13 @@ void brake_actuator_set_speed(float speed)
     }
     
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, speed < 0.0 ? 0 : 1);
-    TIM3->CCR1 = (uint32_t)(65535 * (fabs(speed) / BRAKE_ACTUATOR_SPEED_LIMIT));
+
+    // set new pwm frequency leaving constant the duty cycle ~ 50% of the new arr
+    uint32_t arr = (uint32_t)((84e6 / (fabs(speed) / MM_STEP)) - 1);
+    if (arr > 0xFFFF) arr = 0xFFFF; // maximum 16 bit value
+    if (arr < 10) arr = 10; // prevent high frequencies
+    TIM3->ARR = arr;
+    TIM3->CCR1 = arr / 2; // to set 50% duty cycle
 }
 
 void brake_actuator_pid_init(float kp, float ki, float kd, float sample_time, float anti_windup) {
