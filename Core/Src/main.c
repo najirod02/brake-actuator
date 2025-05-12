@@ -142,7 +142,7 @@ int main(void)
   HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
 
   uint32_t initialPosition = enc_counter*ENC_MM_TICK;
-
+  //TODO: test pwm on actuator
   while (1)
   {
     /* USER CODE END WHILE */
@@ -151,33 +151,35 @@ int main(void)
 
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-    while(enc_counter * ENC_MM_TICK < DISTANCE){
-      //no need to manually step the motor
-      //just check the position using the encoder
-      enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
-    }
+    // while(enc_counter * ENC_MM_TICK < DISTANCE){
+    //   //no need to manually step the motor
+    //   //just check the position using the encoder
+    //   enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    // }
+    HAL_Delay(500);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
 
 
-    enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
-    sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
-    HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-    HAL_Delay(500);//wait some time before rotating in opposite direction
+    // enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    // sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
+    // HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+    HAL_Delay(1000);//wait some time before rotating in opposite direction
 
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, RETRACT);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-    while(enc_counter * ENC_MM_TICK > initialPosition){
-      //no need to manually step the motor
-      //just check the position using the encoder
-      enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
-    }
+    // while(enc_counter * ENC_MM_TICK > initialPosition){
+    //   //no need to manually step the motor
+    //   //just check the position using the encoder
+    //   enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    // }
+    HAL_Delay(500);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
 
-    enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
-    sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
-    HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+    // enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    // sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
+    // HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
 
-    HAL_Delay(500);//wait some time before rotating in opposite direction
+    HAL_Delay(1000);//wait some time before rotating in opposite direction
   }
   /* USER CODE END 3 */
 }
