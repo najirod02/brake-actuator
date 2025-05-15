@@ -16,7 +16,7 @@
  */
 
 #define MM_STEP (10e-6) // mm/step
-#define ENC_MM_TICK (1.22e-4) // mm/tick
+#define ENC_MM_TICK (1.22e-8) // mm/tick
 #define ENC_BRAKE_FREQ_HZ   200                      /* 200Hz */
 #define ENC_BRAKE_PERIOD_MS 1000 / ENC_BRAKE_FREQ_HZ /* 5ms */
 
