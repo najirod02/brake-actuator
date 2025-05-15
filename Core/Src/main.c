@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include "brake_actuator_pid.h"
 #include "pid.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -113,7 +114,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t msg[100] = {'\0'};
+  uint8_t msg[200] = {'\0'};
   
   //setting up pins of the driver
   HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
@@ -146,7 +147,7 @@ int main(void)
       uint32_t ticks = get_absolute_counter(&htim2);
       float distance = get_distance(ticks);
   
-      sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\tPWM ARR = %ld\n\r", ticks, distance, TIM3->ARR);
+      sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\tARR = %ld\tCCR1 = %ld\n\r", ticks, distance, TIM3->ARR, TIM3->CCR1);
       HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
       
       if(fabs(distance - DISTANCE) <= MIN_ERR)
