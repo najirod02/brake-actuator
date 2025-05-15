@@ -45,9 +45,9 @@
 #define MOTOR_GO GPIO_PIN_RESET // the driver is enabled, a step command will be accepted
 #define MOTOR_STOP GPIO_PIN_SET // the driver is disabled, any step command will be discarded
 
-#define DISTANCE 40 //mm
+#define DISTANCE 40 //mm - target distance
 
-#define MIN_ERR 5 //mm
+#define MIN_ERR 5 //mm - just for testing, range for actuator disabling
 
 #define OSC_PULSE 13.1 //rad/s
 #define KP_MAX 0.25
@@ -120,34 +120,42 @@ int main(void)
   HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
   
-  //the pid will change the pwm "speed"
-  //TODO: test pid controller, looking for potential jittering or overshoting
-  brake_actuator_pid_init(0.97 * KP_MAX, 0.1 * KP_MAX, 0.0, ENC_BRAKE_PERIOD_MS / 1000.0, 5.0);
-  brake_actuator_update_set_point(DISTANCE);
-  
   //starting timer for encoder reading
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-
+  
   //starting timer for pwm
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  
+  //the pid will change the pwm "speed"
+  //TODO: test pid controller, looking for potential jittering or overshoting
+  //TODO: with negative distances, the speed will be negative?
+  brake_actuator_pid_init(0.97 * KP_MAX, 0.1 * KP_MAX, 0.0, ENC_BRAKE_PERIOD_MS / 1000.0, 5.0);
+  brake_actuator_update_set_point(DISTANCE);
 
   brake_actuator_enable();
+  uint32_t last_update = HAL_GetTick();
 
   while (1)
   {
     /* USER CODE END WHILE */
-    uint32_t ticks = get_absolute_counter(&htim2);
-    float distance = get_distance_from_counter(&htim2);
+    uint32_t now = HAL_GetTick();
 
-    sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\tPWM ARR = %ld\n\r", ticks, distance, TIM3->ARR);
-    HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-    
-    if(fabs(distance - DISTANCE) <= MIN_ERR)
-      brake_actuator_disable();
+    if (now - last_update >= ENC_BRAKE_PERIOD_MS) {
+      last_update = now;
+        
+      uint32_t ticks = get_absolute_counter(&htim2);
+      float distance = get_distance(ticks);
+  
+      sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\tPWM ARR = %ld\n\r", ticks, distance, TIM3->ARR);
+      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+      
+      if(fabs(distance - DISTANCE) <= MIN_ERR)
+        brake_actuator_disable();
+  
+      brake_actuator_update_pid();
+      brake_actuator_update_speed();
+    }
 
-    brake_actuator_update_pid();
-    brake_actuator_update_speed();
-    HAL_Delay(500);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

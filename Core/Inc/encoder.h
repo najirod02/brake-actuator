@@ -23,12 +23,26 @@
 #define PPR 65536
 #define CPR 16384
 
+/**
+ * relative counter with reference to the actual rotation
+ */
 uint32_t get_relative_counter(TIM_HandleTypeDef *htim);
 
+/**
+ * returns the number of ticks read by the timer
+ * unsigned int
+ */
 uint32_t get_absolute_counter(TIM_HandleTypeDef *htim);
 
+/**
+ * allows to obtain also non positive counter values
+ */
 int32_t get_signed_counter(TIM_HandleTypeDef *htim);
 
+/**
+ * given the number of ticks that is the counter, returns
+ * the distance in mm.
+ */
 float get_distance(int32_t counter);
 
 float get_distance_from_counter(TIM_HandleTypeDef *htim);
