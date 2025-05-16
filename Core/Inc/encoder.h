@@ -20,7 +20,6 @@
 #define ENC_BRAKE_FREQ_HZ   200                      /* 200Hz */
 #define ENC_BRAKE_PERIOD_MS 1000 / ENC_BRAKE_FREQ_HZ /* 5ms */
 
-
 #define PPR 65536
 #define CPR 16384
 

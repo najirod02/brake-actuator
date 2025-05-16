@@ -50,7 +50,6 @@
 
 #define MIN_ERR 5 //mm - just for testing, range for actuator disabling
 
-#define OSC_PULSE 13.1 //rad/s
 #define KP_MAX 0.25
 
 /* USER CODE END PD */
