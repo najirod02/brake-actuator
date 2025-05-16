@@ -43,9 +43,9 @@
 #define MOTOR_GO GPIO_PIN_RESET // the driver is enabled, a step command will be accepted
 #define MOTOR_STOP GPIO_PIN_SET // the driver is disabled, any step command will be discarded
 
-#define DISTANCE 20 //mm
-#define MM_STEP (0.01) // mm/step
-#define ENC_MM_TICK (1.22e-4) // mm/tick
+#define DISTANCE 20 //mm - how much you want to move the actuator
+#define MM_STEP (0.01) // mm/step actuator
+#define ENC_MM_TICK (1.22e-4) // mm/tick encoder
 
 #define PPR 65536
 #define CPR 16384
@@ -111,8 +111,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t msg[50] = {'\0'};
-  uint32_t enc_counter = 0;
+  uint8_t msg[100] = {'\0'};
+  int32_t enc_counter = 0;
   
   //starting timer for encoder reading
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
@@ -134,17 +134,11 @@ int main(void)
    * encoder counts per actuator step ~ 82 counts/steps (81.92)
    * distance per encoder count 0.122 µm/step
    * 
-   * so for example, if the encoder reads 1500 steps we have moved of 
    */
 
-  enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
-  sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %.3f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
-  HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-
-  uint32_t initialPosition = enc_counter*ENC_MM_TICK;
   /**
    * 
-   * the implementation ste the pwm at 500Hz meaning that each second
+   * the implementation set the pwm at 500Hz meaning that each second
    * we have 500 steps of the motor
    * 
    * Clock 84MHZ
@@ -152,39 +146,49 @@ int main(void)
    * AAR 999
    * Pulse 500
    */
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
+    // -- EXTEND --------------------------------------------------------
+
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
+
     // while(enc_counter * ENC_MM_TICK < DISTANCE){
     //   //no need to manually step the motor
     //   //just check the position using the encoder
-    //   enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    //   enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     // }
+
     HAL_Delay(500);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
 
 
-    enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %.3f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
     HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+
     HAL_Delay(1000);//wait some time before rotating in opposite direction
+
+    // -- RETRACT --------------------------------------------------------
 
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, RETRACT);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-    // while(enc_counter * ENC_MM_TICK > initialPosition){
+
+    // while(enc_counter * ENC_MM_TICK > 0){ // assuming that the position 0 is the initial one
     //   //no need to manually step the motor
     //   //just check the position using the encoder
-    //   enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    //   enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     // }
+
     HAL_Delay(500);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
 
-    enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %.3f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
     HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
 

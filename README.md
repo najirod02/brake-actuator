@@ -35,7 +35,7 @@ All microstepping (MSX) pins are ignored for now, as the actuator is operated in
 The actuator performs a simple back-and-forth movement:
 - It starts from an initial position $h$, extends to $h + l$ (determined by the number of steps), and returns to $h$.
 
-- The movement is handled through a loop that toggles the STEP and DIR pin.
+- The movement is handled through a pwm set at 500Hz.
 
 Note: The DIR pin appears to require more current than the STM32 can supply directly. A MOSFET has been used to ensure proper operation; otherwise, the pin remains low. Possibly the driver pin is not behaving correclty.
 
