@@ -37,8 +37,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define EXTEND GPIO_PIN_SET // the actutor "extends" (cw rotation w.r.t. back of actuator)
-#define RETRACT GPIO_PIN_RESET // the actuator "retracts" (ccw rotation w.r.t. back of actuator)
+#define EXTEND GPIO_PIN_RESET // the actutor "extends" (cw rotation w.r.t. back of actuator)
+#define RETRACT GPIO_PIN_SET // the actuator "retracts" (ccw rotation w.r.t. back of actuator)
 #define STEPS 500 //each step moves the shaft of 0.01mm meaning that 1000 steps = 1 cm
 
 /* USER CODE END PD */
@@ -101,7 +101,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t msg[50] = {'\0'};
+  uint8_t msg[100] = {'\0'};
   
   //starting timer for encoder reading
   HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
@@ -123,6 +123,7 @@ int main(void)
     */
 
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
+
     for(uint16_t i = 0; i<STEPS; i++){
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_SET);
       HAL_Delay(1);//with no delay, the step is not "recognnized"
@@ -130,13 +131,14 @@ int main(void)
       HAL_Delay(1);
 
       // encoder counter reading
-      sprintf(msg, "Encoder Ticks = %ld\n\r", (TIM2->CNT)>>2);
+      sprintf(msg, "Encoder Ticks = %ld\n\r", __HAL_TIM_GET_COUNTER(&htim2));
       HAL_UART_Transmit(&huart2, msg, sizeof(msg), 100);
     }
 
     HAL_Delay(200);//wait some time before rotating in opposite direction
 
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, RETRACT);
+
     for(uint16_t i = 0; i<STEPS; i++){
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_SET);
       HAL_Delay(1);
@@ -144,16 +146,15 @@ int main(void)
       HAL_Delay(1);
 
       // encoder counter reading
-      sprintf(msg, "Encoder Ticks = %ld\n\r", (TIM2->CNT)>>2);
+      sprintf(msg, "Encoder Ticks = %ld\n\r", __HAL_TIM_GET_COUNTER(&htim2));
       HAL_UART_Transmit(&huart2, msg, sizeof(msg), 100);
     }
 
     HAL_Delay(200);//wait some time before rotating in opposite direction
 
     // // encoder counter reading
-    // sprintf(msg, "Encoder Ticks = %ld\n\r", (TIM2->CNT)>>2);
-    // HAL_UART_Transmit(&huart2, msg, sizeof(msg), 100);
-
+    sprintf(msg, "Encoder Ticks = %ld\n\r", __HAL_TIM_GET_COUNTER(&htim2));
+    HAL_UART_Transmit(&huart2, msg, sizeof(msg), 100);
   }
   /* USER CODE END 3 */
 }
