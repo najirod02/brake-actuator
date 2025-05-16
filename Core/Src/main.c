@@ -37,14 +37,14 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define EXTEND GPIO_PIN_SET // the actutor "extends" (cw rotation w.r.t. back of actuator)
-#define RETRACT GPIO_PIN_RESET // the actuator "retracts" (ccw rotation w.r.t. back of actuator)
+#define EXTEND GPIO_PIN_RESET // the actutor "extends" (cw rotation w.r.t. back of actuator)
+#define RETRACT GPIO_PIN_SET // the actuator "retracts" (ccw rotation w.r.t. back of actuator)
 
 #define MOTOR_GO GPIO_PIN_RESET // the driver is enabled, a step command will be accepted
 #define MOTOR_STOP GPIO_PIN_SET // the driver is disabled, any step command will be discarded
 
 #define DISTANCE 20 //mm
-#define MM_STEP (10e-6) // mm/step
+#define MM_STEP (0.01) // mm/step
 #define ENC_MM_TICK (1.22e-4) // mm/tick
 
 #define PPR 65536
@@ -138,11 +138,20 @@ int main(void)
    */
 
   enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
-  sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
+  sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %.3f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
   HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
 
   uint32_t initialPosition = enc_counter*ENC_MM_TICK;
-  //TODO: test pwm on actuator
+  /**
+   * 
+   * the implementation ste the pwm at 500Hz meaning that each second
+   * we have 500 steps of the motor
+   * 
+   * Clock 84MHZ
+   * Prescaler 167
+   * AAR 999
+   * Pulse 500
+   */
   while (1)
   {
     /* USER CODE END WHILE */
@@ -160,9 +169,9 @@ int main(void)
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
 
 
-    // enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
-    // sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
-    // HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+    enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %.3f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
+    HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
     HAL_Delay(1000);//wait some time before rotating in opposite direction
 
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, RETRACT);
@@ -175,9 +184,9 @@ int main(void)
     HAL_Delay(500);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
 
-    // enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
-    // sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
-    // HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+    enc_counter = __HAL_TIM_GET_COUNTER(&htim2);
+    sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %.3f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
+    HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
 
     HAL_Delay(1000);//wait some time before rotating in opposite direction
   }
