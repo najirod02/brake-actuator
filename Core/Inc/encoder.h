@@ -15,10 +15,11 @@
  * so for example, if the encoder reads 1500 steps we have moved of 
  */
 
-#define MM_STEP (10e-6) // mm/step
-#define ENC_MM_TICK (1.22e-8) // mm/tick
+#define MM_STEP (0.01) // mm/step
+#define ENC_MM_TICK (1.22e-4) // mm/tick
 #define ENC_BRAKE_FREQ_HZ   200                      /* 200Hz */
 #define ENC_BRAKE_PERIOD_MS 1000 / ENC_BRAKE_FREQ_HZ /* 5ms */
+
 
 #define PPR 65536
 #define CPR 16384
