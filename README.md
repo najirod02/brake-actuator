@@ -33,8 +33,8 @@ All microstepping (MSX) pins are ignored for now, as the actuator is operated in
 
 ### Frequencies range
 After some tests, I've found a possible range of frequencies where the actuator works correctly:\
-MIN 200 Hz     
-MAX 600 Hz
+`MIN 200 Hz -> 4999 ARR and 2500 CCR1`\
+`MAX 600 Hz -> 1665 ARR and  833 CCR1`
 
 ### Current implementation
 The actuator performs a simple back-and-forth movement:
