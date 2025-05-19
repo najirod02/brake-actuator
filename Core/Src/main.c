@@ -164,7 +164,7 @@ int main(void)
     //   enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     // }
 
-    HAL_Delay(500);
+    HAL_Delay(2000);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
 
 
@@ -172,7 +172,7 @@ int main(void)
     sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %.3f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
     HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
 
-    HAL_Delay(1000);//wait some time before rotating in opposite direction
+    HAL_Delay(500);//wait some time before rotating in opposite direction
 
     // -- RETRACT --------------------------------------------------------
 
@@ -185,14 +185,14 @@ int main(void)
     //   enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     // }
 
-    HAL_Delay(500);
+    HAL_Delay(2000);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
 
     enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %.3f\n\r", enc_counter, enc_counter * ENC_MM_TICK);
     HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
 
-    HAL_Delay(1000);//wait some time before rotating in opposite direction
+    HAL_Delay(500);//wait some time before rotating in opposite direction
   }
   /* USER CODE END 3 */
 }

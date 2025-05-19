@@ -31,6 +31,11 @@ where VCC can be either 3.3V or 5V.
 
 All microstepping (MSX) pins are ignored for now, as the actuator is operated in full-step mode. Other necessary driver connections should follow the A4988 datasheet.
 
+### Frequencies range
+After some tests, I've found a possible range of frequencies where the actuator works correctly:\
+MIN 200 Hz     
+MAX 600 Hz
+
 ### Current implementation
 The actuator performs a simple back-and-forth movement:
 - It starts from an initial position $h$, extends to $h + l$ (determined by the number of steps), and returns to $h$.
