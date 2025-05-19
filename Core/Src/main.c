@@ -113,6 +113,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t msg[100] = {'\0'};
   int32_t enc_counter = 0;
+  bool toggleFreq = false;// flag for changing pwm "speed"
   
   //starting timer for encoder reading
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
@@ -136,22 +137,22 @@ int main(void)
    * 
    */
 
-  /**
-   * 
-   * the implementation set the pwm at 500Hz meaning that each second
-   * we have 500 steps of the motor
-   * 
-   * Clock 84MHZ
-   * Prescaler 167
-   * AAR 999
-   * Pulse 500
-   */
-
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    
+    // -- TOGGLE SPEED  -------------------------------------------------
+    if(!toggleFreq){
+      // max speed
+      TIM3->ARR = 1665;
+      TIM3->CCR1 = 833;
+    } else {
+      // min speed
+      TIM3->ARR = 4999;
+      TIM3->CCR1 = 2500;
+    }
 
     // -- EXTEND --------------------------------------------------------
 
@@ -193,6 +194,8 @@ int main(void)
     HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
 
     HAL_Delay(500);//wait some time before rotating in opposite direction
+
+    toggleFreq = !toggleFreq;
   }
   /* USER CODE END 3 */
 }
