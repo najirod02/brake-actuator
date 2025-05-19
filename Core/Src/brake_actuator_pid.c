@@ -42,18 +42,19 @@ void brake_actuator_set_speed(float speed)
     // set new pwm frequency leaving constant the duty cycle ~ 50% of the new arr
     float steps_per_sec = fabs(speed) / MM_STEP;
     uint16_t arr = 0; 
- 
-    if (steps_per_sec > 0.0f) {
-        //84e6 is the clock frequency in Hz
-        arr = (uint16_t)((84e6 / steps_per_sec) - 1);
 
-        if (arr > 0xFFFF) arr = 0xFFFF; // Limit to 16-bit ARR
-        if (arr < 336) arr = 336;// Lower bound to avoid high frequencies
-            
+    if (steps_per_sec > 0.0f) {
+        uint32_t timer_clk = 84e6 / (TIM3->PSC + 1);
+        uint16_t arr = (uint16_t)((timer_clk / steps_per_sec) - 1);
+
+        // limit ARR to working range found by testing
+        if (arr > 4999) arr = 4999; // ~ 200 Hz
+        if (arr < 1665) arr = 1665; // ~ 600 Hz
+
         TIM3->ARR = arr;
-        TIM3->CCR1 = arr / 2; // 50% duty cycle (no step missing)
+        TIM3->CCR1 = arr / 2; // 50% duty cycle
     } else {
-        TIM3->CCR1 = 0; // 0% duty cycle
+        TIM3->CCR1 = 0; // stop pulses
     }
 }
 

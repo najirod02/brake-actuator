@@ -149,8 +149,10 @@ int main(void)
       sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\tARR = %ld\tCCR1 = %ld\n\r", ticks, distance, TIM3->ARR, TIM3->CCR1);
       HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
       
-      if(fabs(distance - DISTANCE) <= MIN_ERR)
+      if(fabs(distance - DISTANCE) <= MIN_ERR) {
         brake_actuator_disable();
+        HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP); // in case the previous function doesn't work
+      }
   
       brake_actuator_update_pid();
       brake_actuator_update_speed();
