@@ -16,7 +16,7 @@ This project aims to test both a linear actuator and an incremental magnetic enc
 
 ## Linear actuator
 The actuator is controlled through the A4988 driver, which requires only two main control signals from the STM32:
-- Step to PC1
+- Step to PA6
 
 - Dir to PC2
 
@@ -34,10 +34,13 @@ All microstepping (MSX) pins are ignored for now, as the actuator is operated in
 ### Frequencies range
 After some tests, I've found a possible range of frequencies where the actuator works correctly:\
 `MIN 200 Hz -> 4999 ARR and 2500 CCR1`\
-`MAX 600 Hz -> 1665 ARR and  833 CCR1`
+`MAX 1000 Hz -> 999 ARR and  500 CCR1`
+
+The actuator should be able to move at the speed of 30mm/s which is ~ 3KHz. It wasn't possible to reach such speed possible due to the driber itself
+or for the power supply given (1A for security reasons).
 
 ### Current implementation
-The actuator performs a simple back-and-forth movement:
+The actuator performs a simple back-and-forth movement, alternating between two frequencies:
 - It starts from an initial position $h$, extends to $h + l$ (determined by the number of steps), and returns to $h$.
 
 - The movement is handled through a pwm set at 500Hz.
@@ -53,4 +56,4 @@ Currently, only channels A and B of the encoder are used on the board:
 
 Power and ground must also be connected.\
 
-In the current implementation we simply read the encoder counter to know how much the actuator moved
+In the current implementation we simply read the encoder counter to know how much the actuator moved.
