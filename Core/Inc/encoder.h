@@ -12,11 +12,11 @@
  * encoder counts per actuator step ~ 82 counts/steps (81.92)
  * distance per encoder count 0.122 µm/step
  * 
- * so for example, if the encoder reads 1500 steps we have moved of 
  */
 
-#define MM_STEP (0.01) // mm/step
-#define ENC_MM_TICK (1.22e-4) // mm/tick
+#define MM_STEP (0.01f) // mm/step actuator
+#define ENC_MM_TICK (1.220703125e-4f) // mm/tick encoder
+
 #define ENC_BRAKE_FREQ_HZ   200                      /* 200Hz */
 #define ENC_BRAKE_PERIOD_MS 1000 / ENC_BRAKE_FREQ_HZ /* 5ms */
 
@@ -41,10 +41,14 @@ int32_t get_signed_counter(TIM_HandleTypeDef *htim);
 
 /**
  * given the number of ticks that is the counter, returns
- * the distance in mm.
+ * the distance in mm
  */
 float get_distance(int32_t counter);
 
+/**
+ * read from timer the counter and convert
+ * it into distance mm
+ */
 float get_distance_from_counter(TIM_HandleTypeDef *htim);
 
 #endif

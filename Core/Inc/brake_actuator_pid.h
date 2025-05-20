@@ -10,7 +10,7 @@
 #include "encoder.h"
 
 #define BRAKE_ACTUATOR_SPEED_LIMIT 30.0 //mm/s - maximum speed of the actuator
-#define BRAKE_ACTUATOR_BRAKING_LIMIT 100.0 //mm - maximum distance that the actuator can move
+#define BRAKE_ACTUATOR_BRAKING_LIMIT 20.0 //mm - maximum distance that the actuator can move
 
 void brake_actuator_update_set_point(float setPoint);
 

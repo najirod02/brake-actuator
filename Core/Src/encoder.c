@@ -17,5 +17,6 @@ float get_distance(int32_t counter){
 }
 
 float get_distance_from_counter(TIM_HandleTypeDef *htim){
-    return __HAL_TIM_GET_COUNTER(htim) * ENC_MM_TICK;
+    int32_t enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(htim);
+    return enc_counter * ENC_MM_TICK;
 }

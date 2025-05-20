@@ -46,11 +46,12 @@
 #define MOTOR_GO GPIO_PIN_RESET // the driver is enabled, a step command will be accepted
 #define MOTOR_STOP GPIO_PIN_SET // the driver is disabled, any step command will be discarded
 
-#define DISTANCE 40 //mm - target distance
+// the total movement range is 2cm
+#define DISTANCE 20.0f //mm - target distance
 
-#define MIN_ERR 5 //mm - just for testing, range for actuator disabling
+#define MIN_ERR 1.f //mm - just for testing, range for actuator disabling
 
-#define KP_MAX 0.25
+#define KP_MAX 0.60
 
 /* USER CODE END PD */
 
@@ -115,20 +116,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t msg[200] = {'\0'};
   
-  //setting up pins of the driver
-  HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-  HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
-  
   //starting timer for encoder reading
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   
   //starting timer for pwm
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+  //setting up pins of the driver
+  HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
+  HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
+  HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
   
   //the pid will change the pwm "speed"
-  //TODO: test pid controller, looking for potential jittering or overshoting
-  //TODO: with negative distances, the speed will be negative?
   brake_actuator_pid_init(0.97 * KP_MAX, 0.1 * KP_MAX, 0.0, ENC_BRAKE_PERIOD_MS / 1000.0, 5.0);
   brake_actuator_update_set_point(DISTANCE);
 
@@ -138,27 +138,31 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
     uint32_t now = HAL_GetTick();
 
     if (now - last_update >= ENC_BRAKE_PERIOD_MS) {
       last_update = now;
         
-      uint32_t ticks = get_absolute_counter(&htim2);
-      float distance = get_distance(ticks);
-  
-      sprintf((char*)msg, "Encoder Ticks = %ld\tDistance = %f\tARR = %ld\tCCR1 = %ld\n\r", ticks, distance, TIM3->ARR, TIM3->CCR1);
-      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-      
-      if(fabs(distance - DISTANCE) <= MIN_ERR) {
-        brake_actuator_disable();
-        HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP); // in case the previous function doesn't work
-      }
-  
       brake_actuator_update_pid();
       brake_actuator_update_speed();
-    }
 
-    /* USER CODE BEGIN 3 */
+      uint32_t ticks = get_absolute_counter(&htim2);
+      float distance = get_distance_from_counter(&htim2);
+
+      sprintf((char*)msg, "Encoder Ticks = %ld\tARR = %ld\tCCR1 = %ld\n\r", ticks, TIM3->ARR, TIM3->CCR1);
+      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+      
+      // for testing, stop when reached final position
+      if(fabs(distance - DISTANCE) <= MIN_ERR) {
+        brake_actuator_disable();
+        HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP); // "cut power" from motor
+        sprintf((char*)msg, "STOP. REACHED POSITION!");
+        HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+      }
+      
+    }
   }
   /* USER CODE END 3 */
 }

@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdbool.h>
 
+#include "usart.h"
+
 float pid_prev_errors[N_PID_PREV_ERRORS];
 PidController_t pid_controller;
 
@@ -37,19 +39,19 @@ void brake_actuator_set_speed(float speed)
         else speed = -BRAKE_ACTUATOR_SPEED_LIMIT;
     }
     
-    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, speed < 0.0 ? 0 : 1);
+    // RETRACT = 1; EXTEND = 0
+    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, speed < 0.0 ? 1 : 0);
 
     // set new pwm frequency leaving constant the duty cycle ~ 50% of the new arr
     float steps_per_sec = fabs(speed) / MM_STEP;
-    uint16_t arr = 0; 
 
     if (steps_per_sec > 0.0f) {
+        //84e6 is the timer clock, need to be changed based on the ioc file
         uint32_t timer_clk = 84e6 / (TIM3->PSC + 1);
         uint16_t arr = (uint16_t)((timer_clk / steps_per_sec) - 1);
-
         // limit ARR to working range found by testing
         if (arr > 4999) arr = 4999; // ~ 200 Hz
-        if (arr < 1665) arr = 1665; // ~ 600 Hz
+        if (arr < 1249) arr = 1249; // ~ 600 Hz
 
         TIM3->ARR = arr;
         TIM3->CCR1 = arr / 2; // 50% duty cycle
