@@ -45,9 +45,4 @@ Currently, only channels A and B of the encoder are used on the board:
 - Channel B is encoder pin 5.
 
 Power and ground must also be connected.\
-There is no implementation yet to read or interpret the encoder data.
-
-## Next steps
-- Implement encoder reading to track the actuator’s real-time position.
-
-- Replace the current toggle-based stepping with a PWM-based signal on the STEP pin for more precise and consistent speed control.
+In the current implementation, we only read the encoder counter without using it for distance measurements.

@@ -126,7 +126,7 @@ int main(void)
 
     for(uint16_t i = 0; i<STEPS; i++){
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_SET);
-      HAL_Delay(1);//with no delay, the step is not "recognnized"
+      HAL_Delay(1);//with no delay, the step is not "recognized"
       HAL_GPIO_WritePin(ActuatorStep_GPIO_Port, ActuatorStep_Pin, GPIO_PIN_RESET);
       HAL_Delay(1);
 
@@ -151,10 +151,6 @@ int main(void)
     }
 
     HAL_Delay(200);//wait some time before rotating in opposite direction
-
-    // // encoder counter reading
-    sprintf(msg, "Encoder Ticks = %ld\n\r", __HAL_TIM_GET_COUNTER(&htim2));
-    HAL_UART_Transmit(&huart2, msg, sizeof(msg), 100);
   }
   /* USER CODE END 3 */
 }
