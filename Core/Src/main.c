@@ -43,7 +43,8 @@
 #define MOTOR_GO GPIO_PIN_RESET // the driver is enabled, a step command will be accepted
 #define MOTOR_STOP GPIO_PIN_SET // the driver is disabled, any step command will be discarded
 
-#define DISTANCE 10.0f //mm - how much you want to move the actuator
+#define DISTANCE 19.05f //mm - how much you want to move the actuator
+#define STROKE_LENGTH 19.05f //mm - how much the actuatr can move from the starting position zero
 #define MM_STEP (0.01f) // mm/step actuator
 
 /**
@@ -57,9 +58,9 @@
  * 
  */
 #define ENC_MM_TICK (1.220703125e-4f) // mm/tick encoder
+#define CPR 16384 // number of counts for each complete rotation
 
-#define PPR 65536
-#define CPR 16384
+#define HOMING_SETUP 1 // if needed, bring the actuator to the inital position, fully extended
 
 /* USER CODE END PD */
 
@@ -125,12 +126,15 @@ int main(void)
   uint8_t msg[100] = {'\0'};
   int32_t enc_counter = 0;
   float distance = 0;
-  bool toggleFreq = true;// flag for changing pwm "speed"
   
   //starting timer for encoder reading
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+  
   //starting timer for pwm
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  // setting pwm speed ~ 1KHz
+  TIM3->ARR = 999;
+  TIM3->CCR1 = 500;
 
   //setting up pins of the driver
   //at startup, disable it
@@ -138,56 +142,62 @@ int main(void)
   HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
 
+  #if HOMING_SETUP
+    // this section should bring the pedal to the initial position
+    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
+    HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
+    HAL_Delay(2500);
+    HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
+    
+    // define new starting position
+    __HAL_TIM_SET_COUNTER(&htim2, 0);
+  #endif
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    
-    // -- TOGGLE SPEED  -------------------------------------------------
-    if(!toggleFreq){
-      // max speed ~ 600Hz
-      TIM3->ARR = 1249;
-      TIM3->CCR1 = 625;
-    } else {
-      // min speed ~ 200Hz
-      TIM3->ARR = 4999;
-      TIM3->CCR1 = 2500;
-    }
-
-    // -- EXTEND --------------------------------------------------------
-
-    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
-    HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-
-    while(fabs(enc_counter * ENC_MM_TICK) < DISTANCE){
-      //no need to manually step the motor
-      //just check the position using the encoder
-      enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
-      sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
-      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-    }
-
-    HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
-    HAL_Delay(1000);//wait some time before rotating in opposite direction
 
     // -- RETRACT --------------------------------------------------------
 
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, RETRACT);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
 
-    while(enc_counter * ENC_MM_TICK > 0){ // assuming that the position 0 (relative) is the initial one
-      //no need to manually step the motor
-      //just check the position using the encoder
-      enc_counter = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+    /**
+     * as the timer counts up when extending, as the initial position is fully extended
+     * we need to invert the cables or invert the value read.
+     */
+    enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+
+    while(fabs(enc_counter * ENC_MM_TICK) > 0){
+      enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+      sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
+      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+    }
+
+    //if no encoder, ~2s for full movement at 1KHz
+    //comment while and simply put
+    //HAL_Delay(2000);
+
+    HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
+    HAL_Delay(200);
+
+    // -- EXTEND --------------------------------------------------------
+
+    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
+    HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
+
+    enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+
+    while(fabs(enc_counter * ENC_MM_TICK) < DISTANCE && fabs(enc_counter * ENC_MM_TICK) < STROKE_LENGTH){
+      enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
       sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
       HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
     }
 
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
-    HAL_Delay(1000);//wait some time before rotating in opposite direction
-
-    toggleFreq = !toggleFreq;// toggle speed
+    HAL_Delay(200);
   }
   /* USER CODE END 3 */
 }
