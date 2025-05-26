@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,6 +62,10 @@
 #define CPR 16384 // number of counts for each complete rotation
 
 #define HOMING_SETUP 1 // if needed, bring the actuator to the inital position, fully extended
+
+#define MOVEMENT_TIME 2000 // how much time the actuator moves in a direction
+
+#define DIRECTION_DELAY 200 // how much time to wait before changing direction of movement
 
 /* USER CODE END PD */
 
@@ -143,15 +148,18 @@ int main(void)
   HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
 
   #if HOMING_SETUP
-    // this section should bring the pedal to the initial position
+    // this section should bring the pedal to the initial position that is no braking
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-    HAL_Delay(2500);
+    HAL_Delay(1000);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
     
     // define new starting position
     __HAL_TIM_SET_COUNTER(&htim2, 0);
   #endif
+
+  // set distance objective as the minimum between the stroke length and the desired distance
+  distance = fmin(DISTANCE, STROKE_LENGTH);
 
   while (1)
   {
@@ -166,42 +174,40 @@ int main(void)
 
     /**
      * as the timer counts up when extending, as the initial position is fully extended
-     * we need to invert the cables or invert the value read.
+     * we need to invert the value read.
      */
     // enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
 
-    // while(fabs(enc_counter * ENC_MM_TICK) > 0){
+    // while(fabs(enc_counter * ENC_MM_TICK) < distance){
     //   enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     //   sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
     //   HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
     // }
-
-    //if no encoder, ~2s for full movement at 1KHz
-    //comment while
-    HAL_Delay(2000);
+    
+    //if no encoder comment while
+    HAL_Delay(MOVEMENT_TIME);
 
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
-    HAL_Delay(200);
-
+    HAL_Delay(DIRECTION_DELAY);
+    
     // -- EXTEND --------------------------------------------------------
 
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-
+    
     // enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
-
-    // while(fabs(enc_counter * ENC_MM_TICK) < DISTANCE && fabs(enc_counter * ENC_MM_TICK) < STROKE_LENGTH){
+    
+    // while(fabs(enc_counter * ENC_MM_TICK) > 0){
     //   enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
     //   sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
     //   HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-    // }
+    // }    
 
-    //if no encoder, ~2s for full movement at 1KHz
-    //comment while
-    HAL_Delay(2000);
+    //if no encoder comment while
+    HAL_Delay(MOVEMENT_TIME);
 
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
-    HAL_Delay(200);
+    HAL_Delay(DIRECTION_DELAY);
   }
   /* USER CODE END 3 */
 }
