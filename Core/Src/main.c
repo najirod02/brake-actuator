@@ -132,9 +132,9 @@ int main(void)
   
   //starting timer for pwm
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-  // setting pwm speed ~ 1KHz
-  TIM3->ARR = 999;
-  TIM3->CCR1 = 500;
+  // setting pwm speed ~ 800Hz
+  TIM3->ARR = 1249;
+  TIM3->CCR1 = 625;
 
   //setting up pins of the driver
   //at startup, disable it
@@ -168,17 +168,17 @@ int main(void)
      * as the timer counts up when extending, as the initial position is fully extended
      * we need to invert the cables or invert the value read.
      */
-    enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+    // enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
 
-    while(fabs(enc_counter * ENC_MM_TICK) > 0){
-      enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
-      sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
-      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-    }
+    // while(fabs(enc_counter * ENC_MM_TICK) > 0){
+    //   enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+    //   sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
+    //   HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+    // }
 
     //if no encoder, ~2s for full movement at 1KHz
-    //comment while and simply put
-    //HAL_Delay(2000);
+    //comment while
+    HAL_Delay(2000);
 
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
     HAL_Delay(200);
@@ -188,13 +188,17 @@ int main(void)
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
 
-    enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+    // enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
 
-    while(fabs(enc_counter * ENC_MM_TICK) < DISTANCE && fabs(enc_counter * ENC_MM_TICK) < STROKE_LENGTH){
-      enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
-      sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
-      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-    }
+    // while(fabs(enc_counter * ENC_MM_TICK) < DISTANCE && fabs(enc_counter * ENC_MM_TICK) < STROKE_LENGTH){
+    //   enc_counter = -(int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+    //   sprintf((char*)msg, "Encoder Ticks = %ld\n\r", enc_counter);
+    //   HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+    // }
+
+    //if no encoder, ~2s for full movement at 1KHz
+    //comment while
+    HAL_Delay(2000);
 
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
     HAL_Delay(200);
