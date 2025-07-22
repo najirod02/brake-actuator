@@ -6,7 +6,7 @@ This project aims to test both a linear actuator and an incremental magnetic enc
 
 - [LGA561S20-B-TSCA-019 –  Captive linear actuator – NEMA 23](https://www.nanotec.com/us/en/products/8546-lga561s20-b-tsca-019)
 
-    - [Product specification - article number](https://www.nanotec.com/eu/en/knowledge-base-article/captive-linear-actuators)
+- [Product specification - article number](https://www.nanotec.com/eu/en/knowledge-base-article/captive-linear-actuators)
 
 - [NME2-UVW-U15-05-O –  High-resolution magnetic encoder](https://www.nanotec.com/us/en/products/8482-nme2-uvw-u15-05-o)
 
@@ -38,6 +38,11 @@ After some tests, I've found a possible range of frequencies where the actuator 
 
 The actuator should be able to move at the speed of 30mm/s which is ~ 3KHz. It wasn't possible to reach such speed possible due to the driver itself
 or for the power supply given (1A for security reasons).
+
+Power supply for actuator:
+- V at least 20V
+
+- I more or less 1A
 
 ### Current implementation
 The actuator performs a simple back-and-forth movement, alternating between two frequencies:
