@@ -46,10 +46,11 @@
 #define MOTOR_GO GPIO_PIN_RESET // the driver is enabled, a step command will be accepted
 #define MOTOR_STOP GPIO_PIN_SET // the driver is disabled, any step command will be discarded
 
-// the total movement range is 2cm
-#define DISTANCE 20.0f //mm - target distance
+#define DISTANCE 8.0f //mm - target distance
 
-#define MIN_ERR 1.f //mm - just for testing, range for actuator disabling
+#define MIN_ERR 0.05f //mm - just for testing, range for actuator disabling
+
+#define HOMING_SETUP 1 // if needed, bring the actuator to the inital position, fully extended
 
 #define KP_MAX 0.60
 
@@ -116,23 +117,35 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t msg[200] = {'\0'};
   
+  //setting up pins of the driver
+  HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
+  HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, RETRACT);
+  HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
+
   //starting timer for encoder reading
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   
   //starting timer for pwm
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 
-  //setting up pins of the driver
-  HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-  HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
-  HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
-  
+  #if HOMING_SETUP
+    // this section should bring the pedal to the initial position that is no braking
+    HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
+    HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
+    HAL_Delay(500);
+    HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
+    #endif
+    
+  // define new starting position
+  __HAL_TIM_SET_COUNTER(&htim2, 0);
+
   //the pid will change the pwm "speed"
   brake_actuator_pid_init(0.97 * KP_MAX, 0.1 * KP_MAX, 0.0, ENC_BRAKE_PERIOD_MS / 1000.0, 5.0);
   brake_actuator_update_set_point(DISTANCE);
 
   brake_actuator_enable();
+  HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
   uint32_t last_update = HAL_GetTick();
 
   while (1)
