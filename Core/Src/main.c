@@ -27,9 +27,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "brake_actuator_pid.h"
-#include "pid.h"
 #include <math.h>
+#include "brake_actuator_pid.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,19 +39,11 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define EXTEND GPIO_PIN_SET // the actutor "extends" (cw rotation w.r.t. back of actuator)
-#define RETRACT GPIO_PIN_RESET // the actuator "retracts" (ccw rotation w.r.t. back of actuator)
+#define HOMING_SETUP 0 // if needed, bring the actuator to the inital position, fully extended
 
-#define MOTOR_GO GPIO_PIN_RESET // the driver is enabled, a step command will be accepted
-#define MOTOR_STOP GPIO_PIN_SET // the driver is disabled, any step command will be discarded
+#define PID_UPDATE_TIME 200 //ms - how much time passes between each new update
 
-#define DISTANCE 8.0f //mm - target distance
-
-#define MIN_ERR 0.05f //mm - just for testing, range for actuator disabling
-
-#define HOMING_SETUP 1 // if needed, bring the actuator to the inital position, fully extended
-
-#define KP_MAX 0.60
+#define BRAKING_ACTUATOR_PERIOD_MS 1000 / 200
 
 /* USER CODE END PD */
 
@@ -70,7 +61,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -108,74 +99,87 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t msg[200] = {'\0'};
-  
+
   //setting up pins of the driver
+  //at startup, disable it
   HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
-  HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, RETRACT);
   HAL_GPIO_WritePin(ActuatorSleep_GPIO_Port, ActuatorSleep_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
-
-  //starting timer for encoder reading
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   
-  //starting timer for pwm
+  //starting timer for pwm and set pid
+  #define KP_BRAKE_MAX 0.60
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  brake_actuator_pid_init(0.97 * KP_BRAKE_MAX, 0.1 * KP_BRAKE_MAX, 0.0, BRAKING_ACTUATOR_PERIOD_MS / 1000.0, 5.0);
+
+  // setting pwm speed ~ 800Hz
+  // TIM3->ARR = 1249;
+  // TIM3->CCR1 = 625;
+
+  // setting pwm speed ~ 200Hz
+  // TIM3->ARR = 9999;
+  // TIM3->CCR1 = 5000;
+
+  // setting pwm speed at 0Hz (to be sure that even if motor is enable nothing moves)
+  TIM3->ARR = 0;
+  TIM3->CCR1 = 0;
 
   #if HOMING_SETUP
-    // this section should bring the pedal to the initial position that is no braking
+  // --- Homing: Extend until the encoder stabilizes ---
     HAL_GPIO_WritePin(ActuatorDir_GPIO_Port, ActuatorDir_Pin, EXTEND);
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-    HAL_Delay(500);
+
+    int32_t last_count = __HAL_TIM_GET_COUNTER(&htim2);
+    int32_t stable_count = 0;
+    uint32_t stable_time = 0;
+
+    const uint32_t CHECK_INTERVAL_MS = 20;
+    const uint32_t STABLE_THRESHOLD_MS = 200;
+    const int32_t DELTA_THRESHOLD = 2;
+
+    while (stable_time < STABLE_THRESHOLD_MS) {
+      HAL_Delay(CHECK_INTERVAL_MS);
+
+      int32_t current_count = __HAL_TIM_GET_COUNTER(&htim2);
+      sprintf((char*)msg, "Encoder Ticks = %ld\n\r", current_count);
+      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
+      int32_t delta = abs(current_count - last_count);
+
+      if (delta <= DELTA_THRESHOLD) {
+        stable_time += CHECK_INTERVAL_MS;
+      } else {
+        stable_time = 0;  // Reset timer if movement detected
+        last_count = current_count;
+      }
+    }
+
+    // Stop motor once we assume homing position is reached
     HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
-    #endif
-    
-  // define new starting position
-  __HAL_TIM_SET_COUNTER(&htim2, 0);
 
-  //the pid will change the pwm "speed"
-  brake_actuator_pid_init(0.97 * KP_MAX, 0.1 * KP_MAX, 0.0, ENC_BRAKE_PERIOD_MS / 1000.0, 5.0);
-  brake_actuator_update_set_point(DISTANCE);
-
-  brake_actuator_enable();
-  HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
-  uint32_t last_update = HAL_GetTick();
+    // Define homing (zero) position
+    __HAL_TIM_SET_COUNTER(&htim2, 0);
+  #endif
+   
+  uint32_t previousTime = HAL_GetTick();
 
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    uint32_t now = HAL_GetTick();
 
-    if (now - last_update >= ENC_BRAKE_PERIOD_MS) {
-      last_update = now;
-        
+    //after some time, update both pid and speed based on the latest value available
+    if(HAL_GetTick() - previousTime > PID_UPDATE_TIME){
+      previousTime = HAL_GetTick();
       brake_actuator_update_pid();
       brake_actuator_update_speed();
-
-      uint32_t ticks = get_absolute_counter(&htim2);
-      float distance = get_distance_from_counter(&htim2);
-
-      sprintf((char*)msg, "Encoder Ticks = %ld\tARR = %ld\tCCR1 = %ld\n\r", ticks, TIM3->ARR, TIM3->CCR1);
-      HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-      
-      // for testing, stop when reached final position
-      if(fabs(distance - DISTANCE) <= MIN_ERR) {
-        brake_actuator_disable();
-        HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP); // "cut power" from motor
-        sprintf((char*)msg, "STOP. REACHED POSITION!");
-        HAL_UART_Transmit(&huart2, (char*)msg, strlen(msg), 100);
-      }
-      
     }
+
   }
   /* USER CODE END 3 */
 }
