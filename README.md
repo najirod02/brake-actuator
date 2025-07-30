@@ -30,6 +30,8 @@ Other relevant pin connections:
 
 - UART3 Rx PC5
 
+- UART3 Tx PB10 (if needed)
+
 where VCC can be either 3.3V or 5V.
 
 All microstepping (MSX) pins are ignored for now, as the actuator is operated in full-step mode. Other necessary driver connections should follow the A4988 datasheet.
