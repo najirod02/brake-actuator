@@ -160,14 +160,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
     //after some time, update both pid and speed based on the latest value available
     if(HAL_GetTick() - previousTime > BRAKING_ACTUATOR_PERIOD_MS){
       previousTime = HAL_GetTick();
       brake_actuator_update_pid();
       brake_actuator_update_speed();
-      sprintf((char *)msg2, "[PWM] ARR=%lu CCR1=%lu\r\n", TIM3->ARR, TIM3->CCR1);
-      HAL_UART_Transmit(&huart2, msg2, strlen((char *)msg2), HAL_MAX_DELAY);
+      // sprintf((char *)msg2, "[PWM] ARR=%lu CCR1=%lu\r\n", TIM3->ARR, TIM3->CCR1);
+      // HAL_UART_Transmit(&huart2, msg2, strlen((char *)msg2), HAL_MAX_DELAY);
     }
 
   }
