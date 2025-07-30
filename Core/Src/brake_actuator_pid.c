@@ -3,10 +3,12 @@
 float pid_prev_errors[N_PID_PREV_ERRORS];
 PidController_t pid_controller;
 
-uint8_t msg[100] = {'\0'};
 float actual_pressure = 0.0f;
+
+uint8_t msg[100] = {'\0'};
 uint8_t uart_line[UART_LINE_MAX];
 uint8_t uart_index = 0;
+uint32_t last_uart_msg_time = 0;
 
 bool brake_actuator_enabled = false;
 
@@ -88,6 +90,7 @@ void brake_actuator_update_speed() {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance != USART2) return;
+    last_uart_msg_time = HAL_GetTick();
 
     uint8_t c = uart_line[uart_index];
 

@@ -160,8 +160,16 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    //if actuator is enabled and i don't receive any message for a while, stop actuator
+    //for safety
+    if(brake_actuator_is_enabled() && (HAL_GetTick() - last_uart_msg_time) > UART_TIMEOUT_MS){
+      brake_actuator_disable();
+      sprintf((char *)msg2, "TIMEOUT\r\n");
+      HAL_UART_Transmit(&huart2, msg2, strlen((char *)msg2), HAL_MAX_DELAY);
+    }
+
     //after some time, update both pid and speed based on the latest value available
-    if(HAL_GetTick() - previousTime > BRAKING_ACTUATOR_PERIOD_MS){
+    if((HAL_GetTick() - previousTime) > BRAKING_ACTUATOR_PERIOD_MS){
       previousTime = HAL_GetTick();
       brake_actuator_update_pid();
       brake_actuator_update_speed();

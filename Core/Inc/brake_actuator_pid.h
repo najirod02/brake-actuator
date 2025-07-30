@@ -31,7 +31,10 @@
 
 #define TIMER_CLOCK 84e6 // the clock of the timer, needed to compute the AAR, CCR
 
+#define UART_TIMEOUT_MS 20000 // ms - stop the actuator if not receiving any mesasge
 #define UART_LINE_MAX 32
+
+extern uint32_t last_uart_msg_time;
 
 void brake_actuator_update_set_point(float setPoint);
 
