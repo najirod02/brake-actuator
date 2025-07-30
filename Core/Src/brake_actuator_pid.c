@@ -65,13 +65,15 @@ void brake_actuator_set_speed(float speed)
         TIM3->CCR1 = 0; // stop pulses
     }
     // sprintf((char *)msg, "[PWM] ARR=%lu CCR1=%lu\r\n", TIM3->ARR, TIM3->CCR1);
-    // HAL_UART_Transmit_(&huart2, msg, strlen((char *)msg), HAL_MAX_DELAY);
+    // HAL_UART_Transmit(&huart2, msg, strlen((char *)msg), HAL_MAX_DELAY);
 }
 
 void brake_actuator_pid_init(float kp, float ki, float kd, float sample_time, float anti_windup) {
     pid_init(&pid_controller, kp, kd, ki, sample_time, anti_windup, pid_prev_errors, N_PID_PREV_ERRORS);
     // wait for command from uart
+    //TODO: receive only from uart3, possible conflicts otherwise
     HAL_UART_Receive_IT(&huart2, uart_line, 1);
+    HAL_UART_Receive_IT(&huart3, uart_line, 1);
 }
 
 void brake_actuator_update_pid() {
@@ -89,7 +91,6 @@ void brake_actuator_update_speed() {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart->Instance != USART2) return;
     last_uart_msg_time = HAL_GetTick();
 
     uint8_t c = uart_line[uart_index];
@@ -138,15 +139,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             if (uart_line[1] == '0') {
                 HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
                 brake_actuator_disable();
-                //HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] DISABLED\r\n", 18, HAL_MAX_DELAY);
+                // HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] DISABLED\r\n", 18, HAL_MAX_DELAY);
             } else if (uart_line[1] == '1'){
                 HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
                 brake_actuator_enable();
-                //HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] ENABLED\r\n", 17, HAL_MAX_DELAY);
+                // HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] ENABLED\r\n", 17, HAL_MAX_DELAY);
             } else {
                 //unknown int value
                 brake_actuator_disable();
-                //HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] UNKNOWN COMMAND\r\n", 25, HAL_MAX_DELAY);    
+                // HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] UNKNOWN COMMAND\r\n", 25, HAL_MAX_DELAY);    
             }
         }
         else {
@@ -161,5 +162,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     }
 
     //keep waiting for new char from uart
+    //TODO: receive only from uart3, possible conflicts otherwise
     HAL_UART_Receive_IT(&huart2, &uart_line[uart_index], 1);
+    HAL_UART_Receive_IT(&huart3, &uart_line[uart_index], 1);
 }

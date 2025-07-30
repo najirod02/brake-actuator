@@ -28,6 +28,8 @@ Other relevant pin connections:
 
 - Reset to VCC or PC3
 
+- UART3 Rx PC5
+
 where VCC can be either 3.3V or 5V.
 
 All microstepping (MSX) pins are ignored for now, as the actuator is operated in full-step mode. Other necessary driver connections should follow the A4988 datasheet.
@@ -39,6 +41,15 @@ Such values are obtained through the UART in particular, from the spare pins PC1
 Note: The DIR pin appears to require more current than the STM32 can supply directly. A MOSFET has been used to ensure proper operation; otherwise, the pin remains low. Possibly the driver pin is not behaving correclty.
 
 Note: The actuator requires 2A for each winding. As the driver is only able to deliver 2A, high frequencies are not supported precisely, the maximum achieved was 1kHz.
+
+### UART connections
+The board initializes two uart peripherals, UART2 and UART3.
+
+- UART2 is the "classic" uart that allows to communicate with your pc. It is not possible to use this uart with another board as it is already used by the pc unless an external power supply is given.
+
+- UART3 allows to receive (and if needed, send) commands from another board.
+
+With this configuration it is possible to listen for commands from any board that sends data through the UART3 but also to listen to possible commands sent from the pc using the UART2.
 
 ### UART commands
 As briefly explained before, the ECU can command the actuator by sending some speciifc command to the nucleo board that will manage the enabling/disabling and pwm generation. In particular:

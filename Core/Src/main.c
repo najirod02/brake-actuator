@@ -100,6 +100,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_TIM3_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
@@ -166,6 +167,8 @@ int main(void)
       brake_actuator_disable();
       sprintf((char *)msg2, "TIMEOUT\r\n");
       HAL_UART_Transmit(&huart2, msg2, strlen((char *)msg2), HAL_MAX_DELAY);
+      //uncomment if you want to sand back an error message
+      //HAL_UART_Transmit(&huart3, msg2, strlen((char *)msg2), HAL_MAX_DELAY);
     }
 
     //after some time, update both pid and speed based on the latest value available
