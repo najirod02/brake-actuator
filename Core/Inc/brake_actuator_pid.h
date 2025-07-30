@@ -25,15 +25,13 @@
 #define MOTOR_GO GPIO_PIN_RESET // the driver is enabled, a step command will be accepted
 #define MOTOR_STOP GPIO_PIN_SET // the driver is disabled, any step command will be discarded
 
-#define MAX_PRESSURE 0.8f //bar - how much pressure the actuator can "generate"
+#define MAX_PRESSURE 10.0f //bar - how much pressure the brake pedal can "generate" at most
+
+#define DEADBAND 0.2f //bar - how much we need to be near the target point before stopping the pwm
+
+#define TIMER_CLOCK 84e6 // the clock of the timer, needed to compute the AAR, CCR
 
 #define UART_LINE_MAX 32
-
-typedef enum {
-    UART_WAIT_TYPE,
-    UART_WAIT_PRESSURE,
-    UART_WAIT_COMMAND
-} UartRxState_t;
 
 void brake_actuator_update_set_point(float setPoint);
 
@@ -51,8 +49,11 @@ void brake_actuator_update_pid();
 
 void brake_actuator_update_speed();
 
-/**
- * keep reeading until an unknown command is read or a line feed '\n' is read
+/*!
+ * \brief keep reeading until an unknown command is read or a line feed '\n' is read
+ * 
+ * \warning in case an unknown command is received or it cannot be parse, the actuator will be disabled
+ * for security in order to avoid damages to the brake pedal and/or actuator
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 

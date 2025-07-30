@@ -41,9 +41,9 @@
 
 #define HOMING_SETUP 0 // if needed, bring the actuator to the inital position, fully extended
 
-#define PID_UPDATE_TIME 200 //ms - how much time passes between each new update
-
 #define BRAKING_ACTUATOR_PERIOD_MS 1000 / 200
+
+uint8_t msg2[100] = {'\0'};
 
 /* USER CODE END PD */
 
@@ -113,21 +113,9 @@ int main(void)
   HAL_GPIO_WritePin(ActuatorReset_GPIO_Port, ActuatorReset_Pin, GPIO_PIN_SET);
   
   //starting timer for pwm and set pid
-  #define KP_BRAKE_MAX 0.60
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-  brake_actuator_pid_init(0.97 * KP_BRAKE_MAX, 0.1 * KP_BRAKE_MAX, 0.0, BRAKING_ACTUATOR_PERIOD_MS / 1000.0, 5.0);
-
-  // setting pwm speed ~ 800Hz
-  // TIM3->ARR = 1249;
-  // TIM3->CCR1 = 625;
-
-  // setting pwm speed ~ 200Hz
-  // TIM3->ARR = 9999;
-  // TIM3->CCR1 = 5000;
-
-  // setting pwm speed at 0Hz (to be sure that even if motor is enable nothing moves)
-  TIM3->ARR = 0;
-  TIM3->CCR1 = 0;
+  // CCR should be already be set at 0 on board configuration
+  brake_actuator_pid_init(0.8, 0.6, 0.0, BRAKING_ACTUATOR_PERIOD_MS / 1000.0, 5.0);
 
   #if HOMING_SETUP
   // --- Homing: Extend until the encoder stabilizes ---
@@ -174,10 +162,12 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
     //after some time, update both pid and speed based on the latest value available
-    if(HAL_GetTick() - previousTime > PID_UPDATE_TIME){
+    if(HAL_GetTick() - previousTime > BRAKING_ACTUATOR_PERIOD_MS){
       previousTime = HAL_GetTick();
       brake_actuator_update_pid();
       brake_actuator_update_speed();
+      sprintf((char *)msg2, "[PWM] ARR=%lu CCR1=%lu\r\n", TIM3->ARR, TIM3->CCR1);
+      HAL_UART_Transmit(&huart2, msg2, strlen((char *)msg2), HAL_MAX_DELAY);
     }
 
   }
