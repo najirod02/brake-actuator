@@ -168,7 +168,7 @@ int main(void)
       sprintf((char *)msg2, "TIMEOUT\r\n");
       HAL_UART_Transmit(&huart2, msg2, strlen((char *)msg2), HAL_MAX_DELAY);
       //uncomment if you want to sand back an error message
-      //HAL_UART_Transmit(&huart3, msg2, strlen((char *)msg2), HAL_MAX_DELAY);
+      //HAL_UART_Transmit(&huart3, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);
     }
 
     //after some time, update both pid and speed based on the latest value available

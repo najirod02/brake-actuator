@@ -109,10 +109,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             if (endptr == (char *)&uart_line[1]) {
                 //error during convertion
                 brake_actuator_disable();
-                //HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] ERROR: Invalid new pressure value\r\n", 39, HAL_MAX_DELAY);
+                //HAL_UART_Transmit(&huart2, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);
+                // HAL_UART_Transmit(&huart3, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);    
             } else {
                 actual_pressure = val;
-                // sprintf((char *)msg, "[UART] New PRESSURE: %.2f bar\r\n", actual_pressure);
+                HAL_UART_Transmit(&huart3, (uint8_t *)"a\r\n", 3, HAL_MAX_DELAY);//send ack to ecu
+                // sprintf((char *)msg, "[UART] New PRESSURE\r\n");
                 // HAL_UART_Transmit(&huart2, msg, strlen((char *)msg), HAL_MAX_DELAY);
             }
         }
@@ -125,10 +127,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             if (endptr == (char *)&uart_line[1]) {
                 //error during convertion
                 brake_actuator_disable();
-                //HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] ERROR: Invalid set pressure value\r\n", 39, HAL_MAX_DELAY);
+                HAL_UART_Transmit(&huart2, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);
+                HAL_UART_Transmit(&huart3, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);    
             } else {
                 brake_actuator_update_set_point(val);
-                // sprintf((char *)msg, "[UART] Set PRESSURE: %.2f bar\r\n", val);
+                HAL_UART_Transmit(&huart3, (uint8_t *)"a\r\n", 3, HAL_MAX_DELAY);//send ack to ecu
+                // sprintf((char *)msg, "[UART] Set PRESSURE\r\n");
                 // HAL_UART_Transmit(&huart2, msg, strlen((char *)msg), HAL_MAX_DELAY);
             }
         }
@@ -139,21 +143,25 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             if (uart_line[1] == '0') {
                 HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_STOP);
                 brake_actuator_disable();
+                HAL_UART_Transmit(&huart3, (uint8_t *)"a\r\n", 3, HAL_MAX_DELAY);//send ack to ecu
                 // HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] DISABLED\r\n", 18, HAL_MAX_DELAY);
             } else if (uart_line[1] == '1'){
                 HAL_GPIO_WritePin(ActuatorEnable_GPIO_Port, ActuatorEnable_Pin, MOTOR_GO);
                 brake_actuator_enable();
+                HAL_UART_Transmit(&huart3, (uint8_t *)"a\r\n", 3, HAL_MAX_DELAY);//send ack to ecu
                 // HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] ENABLED\r\n", 17, HAL_MAX_DELAY);
             } else {
                 //unknown int value
                 brake_actuator_disable();
-                // HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] UNKNOWN COMMAND\r\n", 25, HAL_MAX_DELAY);    
+                HAL_UART_Transmit(&huart2, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);
+                HAL_UART_Transmit(&huart3, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);    
             }
         }
         else {
             //unknown command
             brake_actuator_disable();
-            //HAL_UART_Transmit(&huart2, (uint8_t*)"[UART] UNKNOWN COMMAND\r\n", 25, HAL_MAX_DELAY);
+            HAL_UART_Transmit(&huart2, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);
+            HAL_UART_Transmit(&huart3, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);    
         }
     }
     else {

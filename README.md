@@ -67,7 +67,7 @@ As briefly explained before, the ECU can command the actuator by sending some sp
     - S3.34: will set the pressure at 3.34 bar.
     - Saa: will generate an error which ultimately will disable the actuator.
 
-In case of errors during the convertion of float value and/or unrecognized commands, for security reasons, the actuator will be disabled so that we can preserve the integrity of it.
+In case of errors during the convertion of float value and/or unrecognized commands, for security reasons, the actuator will be disabled so that we can preserve the integrity of it. Moreover, a message will be transmited on UART3 ti signal an error to the ecu, simply sending an e(rror) character.
 
 That means, for example, if after sending a 'S8', 'C1' (this means set as target value 8 bar and enabling the actuator), we send a 'Pdd2', 'P1!3e' or 'E1.23' we will consider it as a bad command and so, stop the actuator.
 
