@@ -109,8 +109,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             if (endptr == (char *)&uart_line[1]) {
                 //error during convertion
                 brake_actuator_disable();
-                //HAL_UART_Transmit(&huart2, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);
-                // HAL_UART_Transmit(&huart3, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);    
+                HAL_UART_Transmit(&huart2, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);
+                HAL_UART_Transmit(&huart3, (uint8_t*)"e\r\n", 25, HAL_MAX_DELAY);    
             } else {
                 actual_pressure = val;
                 HAL_UART_Transmit(&huart3, (uint8_t *)"a\r\n", 3, HAL_MAX_DELAY);//send ack to ecu
